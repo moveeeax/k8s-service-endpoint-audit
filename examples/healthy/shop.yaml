@@ -1,0 +1,48 @@
+# Everything here resolves: the Service selector matches the Deployment's pod
+# template labels, and the named targetPort exists as a containerPort name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: shop
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: shop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+---
+# A headless Service with no selector is intentional: DNS returns the records
+# that a StatefulSet or an external Endpoints object provides.
+apiVersion: v1
+kind: Service
+metadata:
+  name: shards
+  namespace: shop
+spec:
+  clusterIP: None
+  ports:
+    - port: 9000

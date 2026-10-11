@@ -1,0 +1,92 @@
+# Four Services, four different ways to route traffic into a wall.
+
+# 1. The Deployment was relabelled app=checkout-api; the selector was not.
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: shop
+spec:
+  selector:
+    app: checkout-service
+  ports:
+    - port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: shop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: checkout-api
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/example/checkout:2.3.1
+          ports:
+            - name: http
+              containerPort: 8080
+---
+# 2. targetPort points at a port name the container never declares.
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory
+  namespace: shop
+spec:
+  selector:
+    app: inventory
+  ports:
+    - name: grpc
+      port: 9000
+      targetPort: grpc-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory
+  namespace: shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+        - name: inventory
+          image: ghcr.io/example/inventory:1.0.0
+          ports:
+            - name: grpc
+              containerPort: 9000
+---
+# 3. The Deployment behind this Service was deleted; the Service stayed.
+apiVersion: v1
+kind: Service
+metadata:
+  name: legacy-reports
+  namespace: shop
+spec:
+  ports:
+    - port: 80
+---
+# 4. An ExternalName whose target was templated from an empty variable.
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments
+  namespace: shop
+spec:
+  type: ExternalName
+  externalName: ""

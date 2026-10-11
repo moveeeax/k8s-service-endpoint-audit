@@ -1,0 +1,7 @@
+# Built binary at the repo root only - a bare pattern would also match the
+# cmd/k8s-service-endpoint-audit/ source directory and drop its main.go.
+/k8s-service-endpoint-audit
+/dist/
+/coverage.out
+/*.exe
+!testdata/**

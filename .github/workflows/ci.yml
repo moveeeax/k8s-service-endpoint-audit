@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.23', '1.24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+      - name: go vet
+        run: go vet ./...
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "these files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: go test
+        run: go test -race ./...
+      - name: build
+        run: go build -o k8s-service-endpoint-audit ./cmd/k8s-service-endpoint-audit
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+      - run: go build -o k8s-service-endpoint-audit ./cmd/k8s-service-endpoint-audit
+      - name: clean examples exit 0
+        run: ./k8s-service-endpoint-audit --manifests examples/healthy
+      - name: broken examples exit 1
+        run: |
+          set +e
+          ./k8s-service-endpoint-audit --manifests examples/broken
+          code=$?
+          set -e
+          if [ "$code" -ne 1 ]; then
+            echo "expected exit 1 on findings, got $code"
+            exit 1
+          fi
+      - name: json output parses
+        run: |
+          set +e
+          ./k8s-service-endpoint-audit --manifests examples/broken --json > out.json
+          set -e
+          python3 -c "import json,sys; d=json.load(open('out.json')); assert d['findings'], d; print(len(d['findings']), 'findings')"

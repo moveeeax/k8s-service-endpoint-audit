@@ -14,7 +14,7 @@ import (
 )
 
 // version is overridden at release time with -ldflags.
-var version = "0.1.0"
+var version = "0.2.0"
 
 const usage = `k8s-service-endpoint-audit - find Services that route nowhere
 

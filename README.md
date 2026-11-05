@@ -1,7 +1,7 @@
 # k8s-service-endpoint-audit
 
 [![ci](https://github.com/moveeeax/k8s-service-endpoint-audit/actions/workflows/ci.yml/badge.svg)](https://github.com/moveeeax/k8s-service-endpoint-audit/actions/workflows/ci.yml)
-[![go](https://img.shields.io/badge/go-1.23%2B-00ADD8)](https://go.dev)
+[![go](https://img.shields.io/badge/go-1.26%2B-00ADD8)](https://go.dev)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Find Kubernetes Services that route nowhere.
@@ -32,6 +32,8 @@ fine, and so is a selector-less Service backed by a hand-maintained `Endpoints`
 object pointing outside the cluster.
 
 ## Install
+
+Requires Go 1.26 or newer.
 
 ```sh
 go install github.com/moveeeax/k8s-service-endpoint-audit/cmd/k8s-service-endpoint-audit@latest
